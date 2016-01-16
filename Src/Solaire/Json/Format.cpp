@@ -99,6 +99,56 @@ namespace Solaire {
         }
     }
 
+    static GenericValue::ValueType getType(IStream& aStream) {
+        const int32_t offset = aStream.getOffset();
+        char c;
+        GenericValue::ValueType type = GenericValue::NULL_T;
+        if(aStream.end()) goto GET_TYPE_RETURN;
+        aStream >> c;
+        while(std::isspace(c)) {
+            if(aStream.end()) goto GET_TYPE_RETURN;
+            aStream >> c;
+        }
+
+        switch(c){
+        case 'n':
+            type = GenericValue::NULL_T;
+            break;
+        case 't':
+        case 'f':
+            type = GenericValue::BOOL_T;
+            break;
+        case '-':
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            type = GenericValue::DOUBLE_T;
+            break;
+        case '"':
+            type = GenericValue::STRING_T;
+            break;
+        case '[':
+            type = GenericValue::ARRAY_T;
+            break;
+        case '{':
+            type = GenericValue::OBJECT_T;
+            break;
+        default:
+            break;
+        }
+
+        GET_TYPE_RETURN:
+        aStream.setOffset(offset);
+        return type;
+    }
+
 
     // JsonFormat
 
