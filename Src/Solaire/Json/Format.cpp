@@ -232,12 +232,16 @@ namespace Solaire {
 
         GenericValue value;
         GenericArray& array_ = value.setArray();
-        while(! aStream.end()) {
-            // Check for close
-            if(! skipWhitespace(aStream)) GenericValue();
-            if(aStream.peek<char>() == ']') return value;
 
+        // Check for close
+        if(! skipWhitespace(aStream)) GenericValue();
+        if(aStream.peek<char>() == ']') return value;
+
+        while(! aStream.end()) {
+            // Read value
             array_.pushBack(readValue(aStream));
+
+            // Read seperator
             if(! skipWhitespace(aStream)) GenericValue();
             aStream >> c;
             switch(c){
@@ -246,8 +250,7 @@ namespace Solaire {
             case ',':
                 break;
             default:
-                aStream.setOffset(aStream.getOffset() - 1);
-                break;
+                return GenericValue();
             }
         }
         return GenericValue();
@@ -260,11 +263,12 @@ namespace Solaire {
 
         GenericValue value;
         GenericObject& object = value.setObject();
-        while(! aStream.end()) {
-            // Check for close
-            if(! skipWhitespace(aStream)) GenericValue();
-            if(aStream.peek<char>() == '}') return value;
 
+        // Check for close
+        if(! skipWhitespace(aStream)) GenericValue();
+        if(aStream.peek<char>() == '}') return value;
+
+        while(! aStream.end()) {
             // Read name
             const GenericValue name = readString(aStream);
             if(! name.isString()) return GenericValue();
@@ -276,6 +280,18 @@ namespace Solaire {
 
             // Read value
             object.emplace(name.getString(), readValue(aStream));
+
+            // Read seperator
+            if(! skipWhitespace(aStream)) GenericValue();
+            aStream >> c;
+            switch(c){
+            case '}':
+                return value;
+            case ',':
+                break;
+            default:
+                return GenericValue();
+            }
         }
         return GenericValue();
     }
