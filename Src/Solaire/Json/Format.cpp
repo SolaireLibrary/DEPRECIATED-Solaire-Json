@@ -45,18 +45,30 @@ namespace Solaire {
     }
 
     static bool writeBool(const bool aValue, OStream& aStream) throw() {
-        return false;
+        if(aValue) {
+            aStream << "true";
+        }else {
+            aStream << "false";
+        }
+        return true;
     }
 
     static bool writeUnsigned(const uint64_t aValue, OStream& aStream) throw() {
-        return false;
+        CString tmp;
+        tmp += aValue;
+        aStream << tmp;
+        return true;
     }
 
     static bool writeSigned(const int64_t aValue, OStream& aStream) throw() {
-        return false;
+        CString tmp;
+        tmp += aValue;
+        aStream << tmp;
+        return true;
     }
 
     static bool writeDouble(const double aValue, OStream& aStream) throw() {
+        //! \todo Implement writeDouble
         return false;
     }
 
