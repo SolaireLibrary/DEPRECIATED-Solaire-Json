@@ -20,6 +20,18 @@
 
 namespace Solaire {
 
+    static bool skipWhitespace(IStream& aStream) {
+        if(aStream.end()) return true;
+        char c;
+        aStream >> c;
+        while(std::isspace(c)) {
+            if(aStream.end()) return true;
+            aStream >> c;
+        }
+        aStream.setOffset(aStream.getOffset() - 1);
+        return true;
+    }
+
     static bool writeValue(const GenericValue& aValue, OStream& aStream) throw();
 
     static bool writeNull(OStream& aStream) throw() {
@@ -101,52 +113,110 @@ namespace Solaire {
 
     static GenericValue::ValueType getType(IStream& aStream) {
         const int32_t offset = aStream.getOffset();
-        char c;
         GenericValue::ValueType type = GenericValue::NULL_T;
-        if(aStream.end()) goto GET_TYPE_RETURN;
-        aStream >> c;
-        while(std::isspace(c)) {
-            if(aStream.end()) goto GET_TYPE_RETURN;
+
+        skipWhitespace(aStream);
+        if(! aStream.end()) {
+            char c;
             aStream >> c;
+
+            switch(c){
+            case 'n':
+                type = GenericValue::NULL_T;
+                break;
+            case 't':
+            case 'f':
+                type = GenericValue::BOOL_T;
+                break;
+            case '-':
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                type = GenericValue::DOUBLE_T;
+                break;
+            case '"':
+                type = GenericValue::STRING_T;
+                break;
+            case '[':
+                type = GenericValue::ARRAY_T;
+                break;
+            case '{':
+                type = GenericValue::OBJECT_T;
+                break;
+            default:
+                break;
+            }
         }
 
-        switch(c){
-        case 'n':
-            type = GenericValue::NULL_T;
-            break;
-        case 't':
-        case 'f':
-            type = GenericValue::BOOL_T;
-            break;
-        case '-':
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            type = GenericValue::DOUBLE_T;
-            break;
-        case '"':
-            type = GenericValue::STRING_T;
-            break;
-        case '[':
-            type = GenericValue::ARRAY_T;
-            break;
-        case '{':
-            type = GenericValue::OBJECT_T;
-            break;
-        default:
-            break;
-        }
-
-        GET_TYPE_RETURN:
         aStream.setOffset(offset);
         return type;
+    }
+
+    static GenericValue readValue(IStream& aStream) throw();
+
+    static GenericValue readNull(IStream& aStream) throw() {
+        if(! skipWhitespace(aStream)) GenericValue();
+        char buffer[4];
+        aStream.read(buffer, 4); // read "null"
+        return GenericValue();
+    }
+
+    static GenericValue readBool(IStream& aStream) throw() {
+        if(! skipWhitespace(aStream)) GenericValue();
+        char buffer[5];
+        buffer[0] = aStream.peek<char>();
+        switch(buffer[0]){
+        case 't':
+            aStream.read(buffer, 4); // read "true"
+            return GenericValue(false);
+        case 'f':
+            aStream.read(buffer, 5); // read "false"
+            return GenericValue(false);
+        default:
+            return GenericValue();
+        }
+    }
+
+    static GenericValue readDouble(IStream& aStream) throw() {
+        return GenericValue();
+    }
+
+    static GenericValue readString(IStream& aStream) throw() {
+        return GenericValue();
+    }
+
+    static GenericValue readArray(IStream& aStream) throw() {
+        return GenericValue();
+    }
+
+    static GenericValue readObject(IStream& aStream) throw() {
+        return GenericValue();
+    }
+
+    static GenericValue readValue(IStream& aStream) throw() {
+        switch(getType(aStream)) {
+        case GenericValue::NULL_T:
+            return readNull(aStream);
+        case GenericValue::BOOL_T:
+            return readBool(aStream);
+        case GenericValue::DOUBLE_T:
+            return readDouble(aStream);
+        case GenericValue::STRING_T:
+            return readString(aStream);
+        case GenericValue::ARRAY_T:
+            return readString(aStream);
+        case GenericValue::OBJECT_T:
+            return readObject(aStream);
+        default:
+            return GenericValue();
+        }
     }
 
 
