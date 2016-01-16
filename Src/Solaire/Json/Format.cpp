@@ -188,6 +188,39 @@ namespace Solaire {
     }
 
     static GenericValue readString(IStream& aStream) throw() {
+        bool escaped = false;
+        char c;
+        aStream >> c; // Skip opening '"'
+        if(c != '"') return GenericValue();
+        GenericValue value;
+        String<char>& string = value.setString();
+
+        while(! aStream.end()){
+            aStream >> c;
+            switch(c) {
+            case '\\':
+                if(escaped){
+                    string.pushBack('\\');
+                    escaped = false;
+                }else{
+                    escaped = true;
+                }
+                break;
+            case '"':
+                if(escaped){
+                    string.pushBack('"');
+                    escaped = false;
+                }else{
+                    return value;
+                }
+                break;
+            default:
+                string.pushBack(c);
+                escaped = false;
+                break;
+            }
+        }
+
         return GenericValue();
     }
 
