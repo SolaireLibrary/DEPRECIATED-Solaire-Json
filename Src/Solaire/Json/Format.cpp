@@ -190,7 +190,7 @@ namespace Solaire {
     static GenericValue readString(IStream& aStream) throw() {
         bool escaped = false;
         char c;
-        aStream >> c; // Skip opening '"'
+        aStream >> c;
         if(c != '"') return GenericValue();
         GenericValue value;
         String<char>& string = value.setString();
@@ -225,6 +225,26 @@ namespace Solaire {
     }
 
     static GenericValue readArray(IStream& aStream) throw() {
+        char c;
+        aStream >> c;
+        if(c != '[') return GenericValue();
+
+        GenericValue value;
+        GenericArray& array = value.setArray();
+        while(! aStream.end()) {
+            array.pushBack(readValue(aStream));
+            if(! skipWhitespace(aStream)) GenericValue();
+            aStream >> c;
+            switch(c){
+            case ']':
+                return value;
+            case ',':
+                break;
+            default:
+                aStream.setOffset(aStream.getOffset() - 1);
+                break;
+            }
+        }
         return GenericValue();
     }
 
