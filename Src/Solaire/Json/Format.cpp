@@ -69,7 +69,11 @@ namespace Solaire {
 
     static bool writeArray(const GenericArray& aValue, OStream& aStream) throw() {
         aStream << '[';
-        for(const GenericValue& i : aValue) if(! writeValue(i, aStream)) return false;
+        const auto end = aValue.end();
+        for(auto i = aValue.begin(); i != end; ++i) {
+            if(! writeValue(*i, aStream)) return false;
+            if(end - i > 1) aStream << ',';
+        }
         aStream << ']';
         return true;
     }
@@ -77,10 +81,12 @@ namespace Solaire {
     static bool writeObject(const GenericObject& aValue, OStream& aStream) throw() {
         aStream << '{';
         const SharedAllocation<StaticContainer<GenericObject::Entry>> entries = aValue.getEntries();
-        for(const GenericObject::Entry& i : *entries) {
-            if(! writeString(i.first, aStream)) return false;
+        const auto end = entries->end();
+        for(auto i = entries->begin(); i != end; ++i) {
+            if(! writeString(i->first, aStream)) return false;
             aStream << ':';
-            if(! writeValue(i.second, aStream)) return false;
+            if(! writeValue(i->second, aStream)) return false;
+            if(end - i > 1) aStream << ',';
         }
         aStream << '}';
         return false;
