@@ -230,9 +230,9 @@ namespace Solaire {
         if(c != '[') return GenericValue();
 
         GenericValue value;
-        GenericArray& array = value.setArray();
+        GenericArray& array_ = value.setArray();
         while(! aStream.end()) {
-            array.pushBack(readValue(aStream));
+            array_.pushBack(readValue(aStream));
             if(! skipWhitespace(aStream)) GenericValue();
             aStream >> c;
             switch(c){
@@ -249,6 +249,32 @@ namespace Solaire {
     }
 
     static GenericValue readObject(IStream& aStream) throw() {
+        char c;
+        aStream >> c;
+        if(c != '{') return GenericValue();
+
+        GenericValue value;
+        GenericObject& object = value.setObject();
+        while(! aStream.end()) {
+            // Read name
+            const GenericValue name = readString(aStream);
+            if(! name.isString()) return GenericValue();
+
+            // Read divider
+            if(! skipWhitespace(aStream)) GenericValue();
+            aStream >> c;
+            switch(c){
+            case ':':
+                return value;
+            default:
+                return GenericValue();
+            }
+
+            // Read value
+            const GenericValue value = readValue(aStream);
+
+            object.emplace(name.getString(), value);
+        }
         return GenericValue();
     }
 
