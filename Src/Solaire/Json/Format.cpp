@@ -170,14 +170,13 @@ namespace Solaire {
 
     static GenericValue readBool(IStream& aStream) throw() {
         if(! skipWhitespace(aStream)) GenericValue();
-        char buffer[5];
-        buffer[0] = aStream.peek<char>();
+        char buffer[4];
+        aStream.read(buffer, 4); // read "true"
         switch(buffer[0]){
         case 't':
-            aStream.read(buffer, 4); // read "true"
-            return GenericValue(false);
+            return GenericValue(true);
         case 'f':
-            aStream.read(buffer, 5); // read "false"
+            aStream.read(buffer, 1); // read "false"
             return GenericValue(false);
         default:
             return GenericValue();
@@ -226,8 +225,8 @@ namespace Solaire {
 
     }
 
-    GenericValue SOLAIRE_EXPORT_CALL JsonFormat::readValue(IStream&) const throw() {
-
+    GenericValue SOLAIRE_EXPORT_CALL JsonFormat::readValue(IStream& aStream) const throw() {
+        return Solaire::readValue(aStream);
     }
 
     bool SOLAIRE_EXPORT_CALL JsonFormat::writeValue(const GenericValue& aValue, OStream& aStream) const throw() {
