@@ -250,7 +250,12 @@ namespace Solaire {
             case ',':
                 break;
             default:
-                return GenericValue();
+                #ifdef SOLAIRE_JSON_WHITESPACE_SEPERATORS
+                    aStream.setOffset(aStream.getOffset() -1);
+                    break;
+                #else
+                    return GenericValue();
+                #endif
             }
         }
         return GenericValue();
@@ -290,7 +295,12 @@ namespace Solaire {
             case ',':
                 break;
             default:
-                return GenericValue();
+                #ifdef SOLAIRE_JSON_WHITESPACE_SEPERATORS
+                    aStream.setOffset(aStream.getOffset() -1);
+                    break;
+                #else
+                    return GenericValue();
+                #endif
             }
         }
         return GenericValue();
