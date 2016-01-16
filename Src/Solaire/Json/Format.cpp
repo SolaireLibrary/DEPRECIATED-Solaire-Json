@@ -184,6 +184,7 @@ namespace Solaire {
     }
 
     static GenericValue readDouble(IStream& aStream) throw() {
+        //! \todo Implement readDouble
         return GenericValue();
     }
 
@@ -232,6 +233,10 @@ namespace Solaire {
         GenericValue value;
         GenericArray& array_ = value.setArray();
         while(! aStream.end()) {
+            // Check for close
+            if(! skipWhitespace(aStream)) GenericValue();
+            if(aStream.peek<char>() == ']') return value;
+
             array_.pushBack(readValue(aStream));
             if(! skipWhitespace(aStream)) GenericValue();
             aStream >> c;
@@ -256,6 +261,10 @@ namespace Solaire {
         GenericValue value;
         GenericObject& object = value.setObject();
         while(! aStream.end()) {
+            // Check for close
+            if(! skipWhitespace(aStream)) GenericValue();
+            if(aStream.peek<char>() == '}') return value;
+
             // Read name
             const GenericValue name = readString(aStream);
             if(! name.isString()) return GenericValue();
@@ -263,17 +272,10 @@ namespace Solaire {
             // Read divider
             if(! skipWhitespace(aStream)) GenericValue();
             aStream >> c;
-            switch(c){
-            case ':':
-                return value;
-            default:
-                return GenericValue();
-            }
+            if(c != ':') return GenericValue();
 
             // Read value
-            const GenericValue value = readValue(aStream);
-
-            object.emplace(name.getString(), value);
+            object.emplace(name.getString(), readValue(aStream));
         }
         return GenericValue();
     }
