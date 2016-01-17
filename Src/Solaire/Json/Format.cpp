@@ -16,6 +16,7 @@
 // Email             : solairelibrary@mail.com
 // GitHub repository : https://github.com/SolaireLibrary/SolaireCPP
 
+#include <iostream>
 #include "Solaire/Json/Format.hpp"
 
 namespace Solaire {
@@ -177,40 +178,43 @@ namespace Solaire {
         return type;
     }
 
-    static GenericValue readValue(IStream& aStream) throw();
+    static GenericValue readValue(IStream& aStream);
 
     static GenericValue readNull(IStream& aStream) throw() {
         if(! skipWhitespace(aStream)) GenericValue();
         char buffer[4];
-        aStream.read(buffer, 4); // read "null"
+        aStream.read(buffer, 4);
+        if(std::memcmp(buffer, "null", 4) != 0) throw std::runtime_error("Json::Null : Value must be either 'null'");
         return GenericValue();
     }
 
-    static GenericValue readBool(IStream& aStream) throw() {
+    static GenericValue readBool(IStream& aStream) {
         if(! skipWhitespace(aStream)) GenericValue();
-        char buffer[4];
-        aStream.read(buffer, 4); // read "true"
+        char buffer[5];
+        aStream.read(buffer, 4);
         switch(buffer[0]){
         case 't':
+            if(std::memcmp(buffer, "true", 4) != 0) throw std::runtime_error("Json::Bool : Value must be either 'true' or 'false'");
             return GenericValue(true);
         case 'f':
-            aStream.read(buffer, 1); // read "false"
+            aStream >> buffer[4];
+            if(std::memcmp(buffer, "false", 5) != 0) throw std::runtime_error("Json::Bool : Value must be either 'true' or 'false'");
             return GenericValue(false);
         default:
-            return GenericValue();
+           throw std::runtime_error("Json::Bool : Failed to read value");
         }
     }
 
     static GenericValue readDouble(IStream& aStream) throw() {
         //! \todo Implement readDouble
-        return GenericValue();
+        throw std::runtime_error("Json::Number : Not implemented");
     }
 
-    static GenericValue readString(IStream& aStream) throw() {
+    static GenericValue readString(IStream& aStream) {
         bool escaped = false;
         char c;
         aStream >> c;
-        if(c != '"') return GenericValue();
+        if(c != '"') throw std::runtime_error("Json::String : String must be opened by '\"'");
         GenericValue value;
         String<char>& string = value.setString();
 
@@ -240,19 +244,19 @@ namespace Solaire {
             }
         }
 
-        return GenericValue();
+        throw std::runtime_error("Json::String : String must be closed by '\"'");
     }
 
-    static GenericValue readArray(IStream& aStream) throw() {
+    static GenericValue readArray(IStream& aStream) {
         char c;
         aStream >> c;
-        if(c != '[') return GenericValue();
+        if(c != '[') throw std::runtime_error("Json::Array : Array must be opened '['");
 
         GenericValue value;
         GenericArray& array_ = value.setArray();
 
         // Check for close
-        if(! skipWhitespace(aStream)) GenericValue();
+        if(! skipWhitespace(aStream)) throw std::runtime_error("Json::Array : Failed to locate first element");
         if(aStream.peek<char>() == ']') return value;
 
         while(! aStream.end()) {
@@ -260,7 +264,7 @@ namespace Solaire {
             array_.pushBack(readValue(aStream));
 
             // Read seperator
-            if(! skipWhitespace(aStream)) GenericValue();
+            if(! skipWhitespace(aStream)) throw std::runtime_error("Json::Array : Failed to locate next element");
             aStream >> c;
             switch(c){
             case ']':
@@ -272,40 +276,40 @@ namespace Solaire {
                     aStream.setOffset(aStream.getOffset() -1);
                     break;
                 #else
-                    return GenericValue();
+                    throw std::runtime_error("Json::Array : Array elements must be separated by ','");
                 #endif
             }
         }
-        return GenericValue();
+        throw std::runtime_error("Json::Array : Array must be closed by ']'");
     }
 
-    static GenericValue readObject(IStream& aStream) throw() {
+    static GenericValue readObject(IStream& aStream) {
         char c;
         aStream >> c;
-        if(c != '{') return GenericValue();
+        if(c != '{') throw std::runtime_error("Json::Object : Object must be opened by '{'");
 
         GenericValue value;
         GenericObject& object = value.setObject();
 
         // Check for close
-        if(! skipWhitespace(aStream)) GenericValue();
+        if(! skipWhitespace(aStream)) throw std::runtime_error("Json::Object : Failed to read first member");
         if(aStream.peek<char>() == '}') return value;
 
         while(! aStream.end()) {
             // Read name
             const GenericValue name = readString(aStream);
-            if(! name.isString()) return GenericValue();
+            if(! name.isString()) throw std::runtime_error("Json::Object : Member name must be a string");
 
             // Read divider
-            if(! skipWhitespace(aStream)) GenericValue();
+            if(! skipWhitespace(aStream)) throw std::runtime_error("Json::Object : Failed to determine position of member name divider");
             aStream >> c;
-            if(c != ':') return GenericValue();
+            if(c != ':') throw std::runtime_error("Json::Object : Member name and value must be separated by ':'");
 
             // Read value
             object.emplace(name.getString(), readValue(aStream));
 
             // Read seperator
-            if(! skipWhitespace(aStream)) GenericValue();
+            if(! skipWhitespace(aStream)) throw std::runtime_error("Json::Object : Failed to determine position of member separator");
             aStream >> c;
             switch(c){
             case '}':
@@ -317,14 +321,14 @@ namespace Solaire {
                     aStream.setOffset(aStream.getOffset() -1);
                     break;
                 #else
-                    return GenericValue();
+                    throw std::runtime_error("Json::Object : Members must be separated by ','");
                 #endif
             }
         }
-        return GenericValue();
+        throw std::runtime_error("Json::Object : Object must be closed by '}'");
     }
 
-    static GenericValue readValue(IStream& aStream) throw() {
+    static GenericValue readValue(IStream& aStream) {
         switch(getType(aStream)) {
         case GenericValue::NULL_T:
             return readNull(aStream);
@@ -339,7 +343,7 @@ namespace Solaire {
         case GenericValue::OBJECT_T:
             return readObject(aStream);
         default:
-            return GenericValue();
+        throw std::runtime_error("Invalid json type");
         }
     }
 
@@ -351,11 +355,22 @@ namespace Solaire {
     }
 
     GenericValue SOLAIRE_EXPORT_CALL JsonFormat::readValue(IStream& aStream) const throw() {
-        return Solaire::readValue(aStream);
+        try{
+            return Solaire::readValue(aStream);
+        }catch(std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            return GenericValue();
+        }
     }
 
     bool SOLAIRE_EXPORT_CALL JsonFormat::writeValue(const GenericValue& aValue, OStream& aStream) const throw() {
-        return Solaire::writeValue(aValue, aStream);
+
+        try{
+            return Solaire::writeValue(aValue, aStream);
+        }catch(std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            return false;
+        }
     }
 
 }

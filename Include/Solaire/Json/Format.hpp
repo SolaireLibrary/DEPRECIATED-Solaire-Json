@@ -44,6 +44,8 @@ namespace Solaire {
         GenericValue SOLAIRE_EXPORT_CALL readValue(IStream&) const throw() override;
         bool SOLAIRE_EXPORT_CALL writeValue(const GenericValue&, OStream&) const throw() override;
 	};
+
+	static const JsonFormat JSON;
 }
 
 #endif
