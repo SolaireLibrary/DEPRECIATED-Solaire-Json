@@ -16,7 +16,6 @@
 // Email             : solairelibrary@mail.com
 // GitHub repository : https://github.com/SolaireLibrary/SolaireCPP
 
-#include <iostream>
 #include "Solaire/Json/Format.hpp"
 
 namespace Solaire {
@@ -339,7 +338,7 @@ namespace Solaire {
         case GenericValue::STRING_T:
             return readString(aStream);
         case GenericValue::ARRAY_T:
-            return readString(aStream);
+            return readArray(aStream);
         case GenericValue::OBJECT_T:
             return readObject(aStream);
         default:
