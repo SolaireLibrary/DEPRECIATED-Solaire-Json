@@ -180,7 +180,7 @@ namespace Solaire {
     static GenericValue readValue(IStream& aStream);
 
     static GenericValue readNull(IStream& aStream) throw() {
-        if(! skipWhitespace(aStream)) GenericValue();
+        if(! skipWhitespace(aStream)) throw std::runtime_error("Json::Null : Could not locate value");
         char buffer[4];
         aStream.read(buffer, 4);
         if(std::memcmp(buffer, "null", 4) != 0) throw std::runtime_error("Json::Null : Value must be either 'null'");
@@ -188,7 +188,7 @@ namespace Solaire {
     }
 
     static GenericValue readBool(IStream& aStream) {
-        if(! skipWhitespace(aStream)) GenericValue();
+        if(! skipWhitespace(aStream)) throw std::runtime_error("Json::Bool : Could not locate value");
         char buffer[5];
         aStream.read(buffer, 4);
         switch(buffer[0]){
@@ -205,8 +205,16 @@ namespace Solaire {
     }
 
     static GenericValue readDouble(IStream& aStream) throw() {
-        //! \todo Implement readDouble
-        throw std::runtime_error("Json::Number : Not implemented");
+        if(! skipWhitespace(aStream)) throw std::runtime_error("Json::Number : Could not locate value");
+        CString buffer;
+        char c;
+        aStream >> c;
+        while((c >= '0' && c <= '9') || c == '-' || c == '.' || c == 'e' || c == 'E') {
+            aStream >> c;
+        }
+        aStream.setOffset(aStream.getOffset() - 1);
+
+        return static_cast<int32_t>(buffer); //! \todo readDouble
     }
 
     static GenericValue readString(IStream& aStream) {
