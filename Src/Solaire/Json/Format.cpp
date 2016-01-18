@@ -68,8 +68,9 @@ namespace Solaire {
     }
 
     static bool writeDouble(const double aValue, OStream& aStream) throw() {
-        //! \todo Implement writeDouble
-        return false;
+        CString tmp;
+        tmp += aValue;
+        aStream << tmp;
     }
 
     static bool writeString(const StringConstant<char>& aValue, OStream& aStream) throw() {
