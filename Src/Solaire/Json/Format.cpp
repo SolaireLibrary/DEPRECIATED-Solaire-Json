@@ -210,6 +210,7 @@ namespace Solaire {
         char c;
         aStream >> c;
         while((c >= '0' && c <= '9') || c == '-' || c == '.' || c == 'e' || c == 'E') {
+            buffer += c;
             aStream >> c;
         }
         aStream.setOffset(aStream.getOffset() - 1);
