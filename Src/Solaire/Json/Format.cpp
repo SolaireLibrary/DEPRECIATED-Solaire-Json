@@ -71,6 +71,7 @@ namespace Solaire {
         CString tmp;
         tmp += aValue;
         aStream << tmp;
+        return true;
     }
 
     static bool writeString(const StringConstant<char>& aValue, OStream& aStream) throw() {
@@ -216,7 +217,7 @@ namespace Solaire {
         }
         aStream.setOffset(aStream.getOffset() - 1);
 
-        return static_cast<int32_t>(buffer); //! \todo readDouble
+        return static_cast<double>(buffer);
     }
 
     static GenericValue readString(IStream& aStream) {
